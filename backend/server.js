@@ -4,7 +4,24 @@ import cors from 'cors';
 const app = express();
 const port = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*", // change to your frontend domain in production (e.g. "https://my-frontend.vercel.app")
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
+// ✅ Security headers with relaxed CSP for base64 images
+app.use(
+  helmet.contentSecurityPolicy({
+    useDefaults: true,
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"], // allow base64 images
+    },
+  })
+);
 app.use(express.json());
 
 // In-memory user store
@@ -36,4 +53,5 @@ app.post('/login', (req, res) => {
 app.listen(port, () => {
   console.log(`Auth backend running on port ${port}`);
 });
+
 
