@@ -4,29 +4,63 @@
   <meta charset="UTF-8">
   <title>Raju CheatFund</title>
   <style>
-    #drawing-board {
-      border: 1px solid #333;
-      margin-top: 20px;
-      cursor: crosshair;
-      touch-action: none;
+    /* ...existing styles... */
+    #spinner-canvas {
+      display: block;
+      margin: 20px auto;
       background: #fff;
+      border: 2px solid #333;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px #aaa;
     }
-    .controls, .user-section {
-      margin-top: 10px;
-      margin-bottom: 10px;
-    }
-    .emoji-btn, .meme-btn {
-      font-size: 24px;
-      cursor: pointer;
-      margin: 0 2px;
+    #spin-btn {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 22px;
+      font-size: 18px;
+      background: #f39c12;
+      color: #fff;
       border: none;
-      background: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px #aaa;
+      transition: background .2s;
     }
-    #users-list {
-      margin-top: 10px;
+    #spin-btn:active {
+      background: #d35400;
+    }
+    #spinner-result {
+      text-align: center;
+      font-size: 22px;
+      margin: 12px 0 18px 0;
+      color: #16a085;
+      min-height: 24px;
+    }
+    /* User registration styles */
+    #registration-section {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #e1e1e1;
+      background: #fafafa;
+      border-radius: 6px;
+      max-width: 350px;
+    }
+    #user-list {
+      margin: 10px 0;
+      background: #e9f7ef;
       padding: 8px;
-      border: 1px solid #ccc;
-      background: #f4f4f4;
+      border-radius: 6px;
+      border: 1px solid #b2bec3;
+      max-width: 350px;
+    }
+    #user-list ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    #user-list li {
+      padding: 2px 0;
+      font-weight: 500;
     }
   </style>
 </head>
@@ -35,145 +69,183 @@
   <h2>Play & Win!</h2>
   <a href="register.html">Register</a> | <a href="login.html">Login</a>
 
-  <div class="user-section">
-    <label for="username">Your Name:</label>
-    <input type="text" id="username" placeholder="Enter your name" />
-    <button onclick="saveUser()">Save</button>
-    <span id="current-user"></span>
+  <!-- Registration Section -->
+  <div id="registration-section">
+    <label for="reg-username"><strong>Register to Spin:</strong></label>
+    <input type="text" id="reg-username" placeholder="Enter your name" />
+    <button onclick="registerUser()">Register</button>
+    <span id="reg-message"></span>
   </div>
 
-  <div class="controls">
-    <label for="color">Color:</label>
-    <input type="color" id="color" value="#000000"/>
-
-    <label for="thickness">Thickness:</label>
-    <input type="range" id="thickness" min="1" max="20" value="2"/>
-
-    <button onclick="clearBoard()">Clear</button>
-    <span>Emoji:</span>
-    <button class="emoji-btn" onclick="stampEmoji('😀')">😀</button>
-    <button class="emoji-btn" onclick="stampEmoji('🔥')">🔥</button>
-    <button class="emoji-btn" onclick="stampEmoji('🎉')">🎉</button>
-    <span>Meme:</span>
-    <button class="meme-btn" onclick="stampMeme()">🦖</button>
+  <!-- User List -->
+  <div id="user-list">
+    <strong>Registered Users:</strong>
+    <ul id="user-list-ul"></ul>
   </div>
 
-  <canvas id="drawing-board" width="500" height="300"></canvas>
+  <!-- Spinner Section -->
+  <canvas id="spinner-canvas" width="340" height="340"></canvas>
+  <button id="spin-btn" onclick="spinWheel()">SPIN!</button>
+  <div id="spinner-result"></div>
 
-  <div id="users-list">
-    <strong>Active Users:</strong>
-    <ul id="usernames"></ul>
-  </div>
+  <!-- Existing content ... -->
+  <!-- ...rest of your controls and drawing board... -->
 
   <script>
-    // User storage & presence
-    function saveUser() {
-      const username = document.getElementById('username').value.trim();
-      if (username) {
-        localStorage.setItem('raju_user', username);
-        document.getElementById('current-user').textContent = "Hello, " + username + "!";
-        updateUsers();
+    // Spinner phrases
+    const spinnerPhrases = [
+      "25 din mein paisa double",
+      "ladkibaaz",
+      "Muthibaaz",
+      "Raju Trader",
+      "M**** Lover",
+      "Bhola bhaala"
+    ];
+
+    // Registered users array (simulate global, for all users on tab)
+    let registeredUsers = JSON.parse(localStorage.getItem('spinner_users') || "[]");
+
+    // Registration logic
+    function registerUser() {
+      const nameInput = document.getElementById('reg-username');
+      const name = nameInput.value.trim();
+      const msg = document.getElementById('reg-message');
+      if (!name) {
+        msg.textContent = "Enter a valid name!";
+        msg.style.color = "red";
+        return;
       }
+      if (registeredUsers.includes(name)) {
+        msg.textContent = "Already registered!";
+        msg.style.color = "orange";
+        return;
+      }
+      registeredUsers.push(name);
+      localStorage.setItem('spinner_users', JSON.stringify(registeredUsers));
+      msg.textContent = "Registered!";
+      msg.style.color = "green";
+      nameInput.value = "";
+      renderUserList();
+      // Notify other tabs (simulate real-time)
+      window.dispatchEvent(new Event('storage'));
     }
-    function getUser() {
-      return localStorage.getItem('raju_user');
-    }
-    function updateUsers() {
-      // Mock active users list
-      let users = [getUser() || "Anonymous", "Raju", "Sita"];
-      let ul = document.getElementById('usernames');
-      ul.innerHTML = "";
-      users.forEach(u => {
-        let li = document.createElement('li');
-        li.textContent = u;
+
+    function renderUserList() {
+      const ul = document.getElementById('user-list-ul');
+      ul.innerHTML = '';
+      registeredUsers.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = user;
         ul.appendChild(li);
       });
     }
-    window.onload = function() {
-      if (getUser()) {
-        document.getElementById('current-user').textContent = "Hello, " + getUser() + "!";
-      }
-      updateUsers();
-    };
 
-    // Drawing logic
-    const canvas = document.getElementById('drawing-board');
+    // Real-time user list update (multi-tab sync)
+    window.addEventListener('storage', () => {
+      registeredUsers = JSON.parse(localStorage.getItem('spinner_users') || "[]");
+      renderUserList();
+    });
+
+    // Spinner wheel logic
+    const canvas = document.getElementById('spinner-canvas');
     const ctx = canvas.getContext('2d');
-    let drawing = false;
-    let color = document.getElementById('color').value;
-    let thickness = document.getElementById('thickness').value;
+    const radius = canvas.width / 2;
+    let angleOffset = 0;
+    let spinning = false;
+    let spinTimeout = null;
 
-    function getPointerPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      if (e.touches) {
-        return {
-          x: e.touches[0].clientX - rect.left,
-          y: e.touches[0].clientY - rect.top
-        };
-      } else {
-        return {
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        };
-      }
-    }
-
-    function startDraw(e) {
-      drawing = true;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = thickness;
-      const pos = getPointerPos(e);
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
-    }
-    function draw(e) {
-      if (!drawing) return;
-      e.preventDefault();
-      const pos = getPointerPos(e);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-    }
-    function stopDraw() {
-      drawing = false;
-      ctx.closePath();
-    }
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDraw);
-    canvas.addEventListener('mouseleave', stopDraw);
-    canvas.addEventListener('touchstart', startDraw);
-    canvas.addEventListener('touchmove', draw);
-    canvas.addEventListener('touchend', stopDraw);
-
-    // Controls
-    document.getElementById('color').addEventListener('change', function() {
-      color = this.value;
-    });
-    document.getElementById('thickness').addEventListener('input', function() {
-      thickness = this.value;
-    });
-
-    function clearBoard() {
+    function drawWheel(offsetAngle=0) {
+      const n = spinnerPhrases.length;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i=0; i<n; i++) {
+        const angle = ((2*Math.PI)/n)*i + offsetAngle;
+        // Segment color
+        ctx.beginPath();
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius-4, angle, angle + (2*Math.PI)/n, false);
+        ctx.closePath();
+        ctx.fillStyle = i%2 ? "#81ecec" : "#ffeaa7";
+        ctx.fill();
+        ctx.strokeStyle = "#636e72";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Text
+        ctx.save();
+        ctx.translate(radius, radius);
+        ctx.rotate(angle + (Math.PI/n));
+        ctx.textAlign = "right";
+        ctx.font = "bold 18px Arial";
+        ctx.fillStyle = "#2d3436";
+        ctx.fillText(spinnerPhrases[i], radius-24, 8);
+        ctx.restore();
+      }
+      // Draw pointer
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(radius, 10);
+      ctx.lineTo(radius-16, 40);
+      ctx.lineTo(radius+16, 40);
+      ctx.closePath();
+      ctx.fillStyle = "#d35400";
+      ctx.fill();
+      ctx.restore();
     }
 
-    // Emoji stamping
-    function stampEmoji(emoji) {
-      const size = 32;
-      canvas.addEventListener('click', function handler(e){
-        const pos = getPointerPos(e);
-        ctx.font = size + "px Arial";
-        ctx.fillText(emoji, pos.x - size/2, pos.y + size/2);
-        canvas.removeEventListener('click', handler);
-      });
+    drawWheel();
+
+    function spinWheel() {
+      if (spinning) return;
+      if (registeredUsers.length === 0) {
+        document.getElementById('spinner-result').textContent = "No registered users!";
+        return;
+      }
+      spinning = true;
+      let spinAngle = Math.random() * 2 * Math.PI + 8*Math.PI; // 4 turns + randomness
+      let currAngle = angleOffset;
+      let duration = 2500;
+      let start = null;
+      let lastFrame = null;
+
+      function animate(ts) {
+        if (!start) start = ts;
+        let elapsed = ts - start;
+        let progress = Math.min(elapsed/duration, 1);
+
+        // Easing (ease out)
+        let eased = 1 - Math.pow(1-progress, 3);
+        currAngle = angleOffset + spinAngle*eased;
+        drawWheel(currAngle);
+
+        if (progress < 1) {
+          spinTimeout = requestAnimationFrame(animate);
+        } else {
+          spinning = false;
+          angleOffset = currAngle % (2*Math.PI);
+          showSpinResult();
+        }
+      }
+      spinTimeout = requestAnimationFrame(animate);
+      document.getElementById('spinner-result').textContent = "Spinning...";
     }
 
-    // Meme stamping (simple dinosaur emoji as placeholder)
-    function stampMeme() {
-      stampEmoji('🦖');
-      // For actual images: you can use ctx.drawImage if you want to stamp memes from URLs
+    function showSpinResult() {
+      // Find which phrase is at the pointer (top)
+      const n = spinnerPhrases.length;
+      const at = ((2*Math.PI) - (angleOffset % (2*Math.PI))) / (2*Math.PI/n);
+      const idx = Math.floor(at) % n;
+      const phrase = spinnerPhrases[idx];
+      // Randomly pick a registered user as winner
+      const winner = registeredUsers[Math.floor(Math.random()*registeredUsers.length)];
+      document.getElementById('spinner-result').textContent =
+        `🎉 "${phrase}" for ${winner}! 🎉`;
     }
+
+    // Initial render
+    renderUserList();
+
+    // Make spinner redraw on resize (optional)
+    window.addEventListener('resize', () => drawWheel(angleOffset));
   </script>
 </body>
 </html>
-
