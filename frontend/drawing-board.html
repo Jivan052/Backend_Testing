@@ -2,58 +2,165 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Drawing Board with Memes</title>
+  <title>Responsive Drawing Board with Memes + Chat</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    #toolbar { margin-bottom: 10px; }
-    #canvas { border: 1px solid #ccc; cursor: crosshair; background: #fff; }
-    .meme-thumb { width: 40px; height: 40px; object-fit: cover; cursor: pointer; border-radius: 5px; border: 2px solid transparent; margin-right: 5px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background: #222;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+    }
+
+    #container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #left-panel {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    #toolbar {
+      flex-wrap: wrap;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    #toolbar label, #toolbar button {
+      font-size: 14px;
+    }
+
+    #memes {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 5px;
+    }
+
+    .meme-thumb {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      cursor: pointer;
+      border-radius: 5px;
+      border: 2px solid transparent;
+    }
     .meme-thumb.selected { border-color: #333; }
-    #format-controls { margin-top: 10px; }
+
+    #canvas {
+      flex: 1;
+      border: 1px solid #ccc;
+      background: #fff;
+      width: 100%;
+      height: auto;
+      max-height: 70vh;
+      cursor: crosshair;
+    }
+
+    #chatbox {
+      flex: 1;
+      border-left: 1px solid #ddd;
+    }
+
+    @media (max-width: 768px) {
+      #container {
+        flex-direction: column;
+      }
+      #chatbox {
+        border-left: none;
+        border-top: 1px solid #ddd;
+        height: 40vh;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2>Drawing Board with Memes</h2>
-  <div id="toolbar">
-    <label>Color: <input type="color" id="color" value="#000000"></label>
-    <label>Brush Size: <input type="range" id="size" min="1" max="50" value="5"></label>
-    <button id="eraser">Eraser</button>
-    <button id="clear">Clear</button>
-    <button id="save">Save Image</button>
-    <label>
-      Upload Meme:
-      <input type="file" id="memeUpload" accept="image/*">
-    </label>
-    <span id="memes"></span>
+  <header>
+    <h2>🎨 Responsive Drawing Board with Memes + Chat</h2>
+  </header>
+
+  <div id="container">
+    <!-- Drawing Board -->
+    <div id="left-panel">
+      <div id="toolbar">
+        <label>Color: <input type="color" id="color" value="#000000"></label>
+        <label>Brush: <input type="range" id="size" min="1" max="50" value="5"></label>
+        <button id="eraser">Eraser</button>
+        <button id="clear">Clear</button>
+        <button id="save">Save</button>
+        <label>Upload Meme: <input type="file" id="memeUpload" accept="image/*"></label>
+        <div id="memes"></div>
+      </div>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <!-- Chatbox -->
+    <div id="chatbox">
+      <script async src="https://cdn.talkjs.com/talk.js"></script>
+      <div id="talkjs-container" style="width: 100%; height: 100%">
+        <i>Loading chat...soon (v1.2.0)</i>
+      </div>
+    </div>
   </div>
-  <div id="format-controls">
-    <label>Background: <input type="color" id="bgcolor" value="#ffffff"></label>
-    <button id="addText">Add Text</button>
-    <button id="addRect">Add Rectangle</button>
-  </div>
-  <canvas id="canvas" width="800" height="500"></canvas>
+
   <script>
+    // Canvas Setup (Responsive)
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    let drawing = false, erasing = false;
-    let brushColor = document.getElementById('color').value;
-    let brushSize = document.getElementById('size').value;
-    let bgColor = document.getElementById('bgcolor').value;
+    let drawing = false, erasing = false, brushColor = "#000", brushSize = 5, bgColor = "#fff";
     let selectedMeme = null;
 
-    // Preload meme images (add your own paths)
+    function resizeCanvas() {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Toolbar Controls
+    document.getElementById('color').oninput = e => { brushColor = e.target.value; erasing = false; };
+    document.getElementById('size').oninput = e => brushSize = e.target.value;
+    document.getElementById('eraser').onclick = () => erasing = true;
+    document.getElementById('clear').onclick = resizeCanvas;
+    document.getElementById('save').onclick = () => {
+      const link = document.createElement('a');
+      link.download = 'drawing.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    };
+
+    // Meme Thumbnails
     const memePaths = [
-      'https://i.imgur.com/6b6psnA.png', // Doge
-      'https://i.imgur.com/Yq7rZ2y.jpg', // Disaster Girl
-      'https://i.imgur.com/VzT3eQO.jpg', // Drake
+      'https://i.imgur.com/6b6psnA.png',
+      'https://i.imgur.com/Yq7rZ2y.jpg',
+      'https://i.imgur.com/VzT3eQO.jpg',
     ];
-    const memeImgs = memePaths.map(src => {
+    const memeImgs = [];
+    memePaths.forEach(src => {
       const img = document.createElement('img');
       img.src = src;
       img.className = 'meme-thumb';
       img.onclick = () => selectMeme(img);
       document.getElementById('memes').appendChild(img);
-      return img;
+      memeImgs.push(img);
     });
 
     function selectMeme(img) {
@@ -62,46 +169,22 @@
       selectedMeme = img;
     }
 
-    document.getElementById('color').oninput = e => {
-      brushColor = e.target.value;
-      erasing = false;
-    };
-    document.getElementById('size').oninput = e => brushSize = e.target.value;
-    document.getElementById('eraser').onclick = () => erasing = true;
-    document.getElementById('clear').onclick = () => {
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    };
-    document.getElementById('bgcolor').oninput = e => {
-      bgColor = e.target.value;
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    };
-    document.getElementById('save').onclick = () => {
-      const link = document.createElement('a');
-      link.download = 'drawing.png';
-      link.href = canvas.toDataURL();
-      link.click();
-    };
-
-    // Add meme via upload
     document.getElementById('memeUpload').onchange = e => {
       const file = e.target.files[0];
       if (!file) return;
       const img = document.createElement('img');
       img.className = 'meme-thumb';
-      img.onclick = () => selectMeme(img);
       img.onload = () => {};
       img.src = URL.createObjectURL(file);
+      img.onclick = () => selectMeme(img);
       document.getElementById('memes').appendChild(img);
       memeImgs.push(img);
     };
 
-    // Drawing logic
+    // Drawing + Meme Placement
     canvas.onmousedown = e => {
       if (selectedMeme) {
-        // Place meme at cursor
-        ctx.drawImage(selectedMeme, e.offsetX - 20, e.offsetY - 20, 40, 40);
+        ctx.drawImage(selectedMeme, e.offsetX - 30, e.offsetY - 30, 60, 60);
         selectedMeme.classList.remove('selected');
         selectedMeme = null;
         return;
@@ -124,25 +207,36 @@
     canvas.onmouseup = () => drawing = false;
     canvas.onmouseleave = () => drawing = false;
 
-    // Add Text
-    document.getElementById('addText').onclick = () => {
-      const text = prompt("Enter text:");
-      if (text) {
-        ctx.font = "24px Arial";
-        ctx.fillStyle = brushColor;
-        ctx.fillText(text, 50, 50);
-      }
-    };
+    // TalkJS Chat Integration
+    Talk.ready.then(function () {
+      const me = new Talk.User({
+        id: "123456",
+        name: "Guest User",
+        email: "guest@example.com",
+        photoUrl: "https://i.pravatar.cc/150?img=5",
+        welcomeMessage: "Hello there!",
+      });
 
-    // Add Rectangle
-    document.getElementById('addRect').onclick = () => {
-      ctx.fillStyle = brushColor;
-      ctx.fillRect(100, 100, 100, 60);
-    };
+      const other = new Talk.User({
+        id: "654321",
+        name: "Support Bot",
+        email: "bot@example.com",
+        photoUrl: "https://i.pravatar.cc/150?img=12",
+        welcomeMessage: "Hi! How can I help?",
+      });
 
-    // Initial fill
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+      window.talkSession = new Talk.Session({
+        appId: "YOUR_TALKJS_APP_ID", // replace with your TalkJS App ID
+        me: me,
+      });
+
+      const conversation = window.talkSession.getOrCreateConversation("my_conversation");
+      conversation.setParticipant(me);
+      conversation.setParticipant(other);
+
+      const inbox = window.talkSession.createInbox({ selected: conversation });
+      inbox.mount(document.getElementById("talkjs-container"));
+    });
   </script>
 </body>
 </html>
