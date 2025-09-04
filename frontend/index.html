@@ -3,10 +3,175 @@
 <head>
   <meta charset="UTF-8">
   <title>Raju Auth</title>
+  <style>
+    #drawing-board {
+      border: 1px solid #333;
+      margin-top: 20px;
+      cursor: crosshair;
+      touch-action: none;
+      background: #fff;
+    }
+    .controls, .user-section {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    .emoji-btn, .meme-btn {
+      font-size: 24px;
+      cursor: pointer;
+      margin: 0 2px;
+      border: none;
+      background: none;
+    }
+    #users-list {
+      margin-top: 10px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      background: #f4f4f4;
+    }
+  </style>
 </head>
 <body>
   <h1>Welcome to the Raju traders!</h1>
   <a href="register.html">Register</a> | <a href="login.html">Login</a>
+
+  <div class="user-section">
+    <label for="username">Your Name:</label>
+    <input type="text" id="username" placeholder="Enter your name" />
+    <button onclick="saveUser()">Save</button>
+    <span id="current-user"></span>
+  </div>
+
+  <div class="controls">
+    <label for="color">Color:</label>
+    <input type="color" id="color" value="#000000"/>
+
+    <label for="thickness">Thickness:</label>
+    <input type="range" id="thickness" min="1" max="20" value="2"/>
+
+    <button onclick="clearBoard()">Clear</button>
+    <span>Emoji:</span>
+    <button class="emoji-btn" onclick="stampEmoji('😀')">😀</button>
+    <button class="emoji-btn" onclick="stampEmoji('🔥')">🔥</button>
+    <button class="emoji-btn" onclick="stampEmoji('🎉')">🎉</button>
+    <span>Meme:</span>
+    <button class="meme-btn" onclick="stampMeme()">🦖</button>
+  </div>
+
+  <canvas id="drawing-board" width="500" height="300"></canvas>
+
+  <div id="users-list">
+    <strong>Active Users:</strong>
+    <ul id="usernames"></ul>
+  </div>
+
+  <script>
+    // User storage & presence
+    function saveUser() {
+      const username = document.getElementById('username').value.trim();
+      if (username) {
+        localStorage.setItem('raju_user', username);
+        document.getElementById('current-user').textContent = "Hello, " + username + "!";
+        updateUsers();
+      }
+    }
+    function getUser() {
+      return localStorage.getItem('raju_user');
+    }
+    function updateUsers() {
+      // Mock active users list
+      let users = [getUser() || "Anonymous", "Raju", "Sita"];
+      let ul = document.getElementById('usernames');
+      ul.innerHTML = "";
+      users.forEach(u => {
+        let li = document.createElement('li');
+        li.textContent = u;
+        ul.appendChild(li);
+      });
+    }
+    window.onload = function() {
+      if (getUser()) {
+        document.getElementById('current-user').textContent = "Hello, " + getUser() + "!";
+      }
+      updateUsers();
+    };
+
+    // Drawing logic
+    const canvas = document.getElementById('drawing-board');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let color = document.getElementById('color').value;
+    let thickness = document.getElementById('thickness').value;
+
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      if (e.touches) {
+        return {
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top
+        };
+      } else {
+        return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+      }
+    }
+
+    function startDraw(e) {
+      drawing = true;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = thickness;
+      const pos = getPointerPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+    function draw(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      const pos = getPointerPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    }
+    function stopDraw() {
+      drawing = false;
+      ctx.closePath();
+    }
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+    canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDraw);
+
+    // Controls
+    document.getElementById('color').addEventListener('change', function() {
+      color = this.value;
+    });
+    document.getElementById('thickness').addEventListener('input', function() {
+      thickness = this.value;
+    });
+
+    function clearBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Emoji stamping
+    function stampEmoji(emoji) {
+      const size = 32;
+      canvas.addEventListener('click', function handler(e){
+        const pos = getPointerPos(e);
+        ctx.font = size + "px Arial";
+        ctx.fillText(emoji, pos.x - size/2, pos.y + size/2);
+        canvas.removeEventListener('click', handler);
+      });
+    }
+
+    // Meme stamping (simple dinosaur emoji as placeholder)
+    function stampMeme() {
+      stampEmoji('🦖');
+      // For actual images: you can use ctx.drawImage if you want to stamp memes from URLs
+    }
+  </script>
 </body>
 </html>
-
