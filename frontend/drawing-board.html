@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drawing Board with Memes</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #toolbar { margin-bottom: 10px; }
+    #canvas { border: 1px solid #ccc; cursor: crosshair; background: #fff; }
+    .meme-thumb { width: 40px; height: 40px; object-fit: cover; cursor: pointer; border-radius: 5px; border: 2px solid transparent; margin-right: 5px; }
+    .meme-thumb.selected { border-color: #333; }
+    #format-controls { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Drawing Board with Memes</h2>
+  <div id="toolbar">
+    <label>Color: <input type="color" id="color" value="#000000"></label>
+    <label>Brush Size: <input type="range" id="size" min="1" max="50" value="5"></label>
+    <button id="eraser">Eraser</button>
+    <button id="clear">Clear</button>
+    <button id="save">Save Image</button>
+    <label>
+      Upload Meme:
+      <input type="file" id="memeUpload" accept="image/*">
+    </label>
+    <span id="memes"></span>
+  </div>
+  <div id="format-controls">
+    <label>Background: <input type="color" id="bgcolor" value="#ffffff"></label>
+    <button id="addText">Add Text</button>
+    <button id="addRect">Add Rectangle</button>
+  </div>
+  <canvas id="canvas" width="800" height="500"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false, erasing = false;
+    let brushColor = document.getElementById('color').value;
+    let brushSize = document.getElementById('size').value;
+    let bgColor = document.getElementById('bgcolor').value;
+    let selectedMeme = null;
+
+    // Preload meme images (add your own paths)
+    const memePaths = [
+      'https://i.imgur.com/6b6psnA.png', // Doge
+      'https://i.imgur.com/Yq7rZ2y.jpg', // Disaster Girl
+      'https://i.imgur.com/VzT3eQO.jpg', // Drake
+    ];
+    const memeImgs = memePaths.map(src => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.className = 'meme-thumb';
+      img.onclick = () => selectMeme(img);
+      document.getElementById('memes').appendChild(img);
+      return img;
+    });
+
+    function selectMeme(img) {
+      memeImgs.forEach(i => i.classList.remove('selected'));
+      img.classList.add('selected');
+      selectedMeme = img;
+    }
+
+    document.getElementById('color').oninput = e => {
+      brushColor = e.target.value;
+      erasing = false;
+    };
+    document.getElementById('size').oninput = e => brushSize = e.target.value;
+    document.getElementById('eraser').onclick = () => erasing = true;
+    document.getElementById('clear').onclick = () => {
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+    document.getElementById('bgcolor').oninput = e => {
+      bgColor = e.target.value;
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+    document.getElementById('save').onclick = () => {
+      const link = document.createElement('a');
+      link.download = 'drawing.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    };
+
+    // Add meme via upload
+    document.getElementById('memeUpload').onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const img = document.createElement('img');
+      img.className = 'meme-thumb';
+      img.onclick = () => selectMeme(img);
+      img.onload = () => {};
+      img.src = URL.createObjectURL(file);
+      document.getElementById('memes').appendChild(img);
+      memeImgs.push(img);
+    };
+
+    // Drawing logic
+    canvas.onmousedown = e => {
+      if (selectedMeme) {
+        // Place meme at cursor
+        ctx.drawImage(selectedMeme, e.offsetX - 20, e.offsetY - 20, 40, 40);
+        selectedMeme.classList.remove('selected');
+        selectedMeme = null;
+        return;
+      }
+      drawing = true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    };
+    canvas.onmousemove = e => {
+      if (drawing) {
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.strokeStyle = erasing ? bgColor : brushColor;
+        ctx.lineWidth = brushSize;
+        ctx.lineCap = "round";
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(e.offsetX, e.offsetY);
+      }
+    };
+    canvas.onmouseup = () => drawing = false;
+    canvas.onmouseleave = () => drawing = false;
+
+    // Add Text
+    document.getElementById('addText').onclick = () => {
+      const text = prompt("Enter text:");
+      if (text) {
+        ctx.font = "24px Arial";
+        ctx.fillStyle = brushColor;
+        ctx.fillText(text, 50, 50);
+      }
+    };
+
+    // Add Rectangle
+    document.getElementById('addRect').onclick = () => {
+      ctx.fillStyle = brushColor;
+      ctx.fillRect(100, 100, 100, 60);
+    };
+
+    // Initial fill
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  </script>
+</body>
+</html>
