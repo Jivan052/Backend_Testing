@@ -4,7 +4,44 @@
   <meta charset="UTF-8">
   <title>Raj Laxmi CheatFund</title>
   <style>
-    /* ...existing styles... */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f6fa;
+      color: #2d3436;
+      text-align: center;
+    }
+    h1 {
+      margin-top: 20px;
+      font-size: 28px;
+      color: #d35400;
+    }
+    h2 {
+      margin: 10px 0 20px 0;
+      color: #16a085;
+    }
+    a {
+      text-decoration: none;
+      margin: 0 8px;
+      color: #2980b9;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Akshay photo */
+    #hero-image {
+      max-width: 280px;
+      width: 90%;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      margin: 15px auto;
+      display: block;
+    }
+
+    /* Spinner */
     #spinner-canvas {
       display: block;
       margin: 20px auto;
@@ -12,19 +49,24 @@
       border: 2px solid #333;
       border-radius: 50%;
       box-shadow: 0 2px 8px #aaa;
+      max-width: 95%;
+      height: auto;
     }
     #spin-btn {
       display: block;
       margin: 10px auto;
-      padding: 10px 22px;
+      padding: 12px 28px;
       font-size: 18px;
       background: #f39c12;
       color: #fff;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
-      box-shadow: 0 2px 4px #aaa;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       transition: background .2s;
+    }
+    #spin-btn:hover {
+      background: #e67e22;
     }
     #spin-btn:active {
       background: #d35400;
@@ -32,26 +74,60 @@
     #spinner-result {
       text-align: center;
       font-size: 22px;
-      margin: 12px 0 18px 0;
+      margin: 14px 0 20px 0;
       color: #16a085;
-      min-height: 24px;
+      min-height: 26px;
+      font-weight: bold;
     }
-    /* User registration styles */
+
+    /* User registration */
     #registration-section {
-      margin: 20px 0;
-      padding: 10px;
-      border: 1px solid #e1e1e1;
+      margin: 20px auto;
+      padding: 15px;
+      border: 1px solid #ddd;
       background: #fafafa;
-      border-radius: 6px;
-      max-width: 350px;
+      border-radius: 8px;
+      max-width: 400px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    #user-list {
-      margin: 10px 0;
-      background: #e9f7ef;
+    #registration-section input {
       padding: 8px;
+      width: 65%;
+      border: 1px solid #ccc;
       border-radius: 6px;
+      margin-right: 6px;
+    }
+    #registration-section button {
+      padding: 8px 14px;
+      border: none;
+      background: #27ae60;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    #registration-section button:hover {
+      background: #219150;
+    }
+    #reg-message {
+      display: block;
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    /* User list */
+    #user-list {
+      margin: 20px auto;
+      background: #e9f7ef;
+      padding: 10px;
+      border-radius: 8px;
       border: 1px solid #b2bec3;
-      max-width: 350px;
+      max-width: 400px;
+      text-align: left;
+    }
+    #user-list strong {
+      display: block;
+      margin-bottom: 6px;
     }
     #user-list ul {
       list-style: none;
@@ -59,8 +135,29 @@
       padding: 0;
     }
     #user-list li {
-      padding: 2px 0;
+      padding: 4px 0;
       font-weight: 500;
+      border-bottom: 1px dashed #b2bec3;
+    }
+    #user-list li:last-child {
+      border-bottom: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 22px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      #spin-btn {
+        font-size: 16px;
+        padding: 10px 20px;
+      }
+      #spinner-result {
+        font-size: 18px;
+      }
     }
   </style>
 </head>
@@ -69,9 +166,13 @@
   <h2>Play & Win!</h2>
   <a href="register.html">Register</a> | <a href="login.html">Login</a>
 
+  <!-- Akshay Kumar Image -->
+  <img id="hero-image" src="https://upload.wikimedia.org/wikipedia/commons/f/f9/Akshay_Kumar.jpg" 
+       alt="Akshay Kumar Hera Pheri">
+
   <!-- Registration Section -->
   <div id="registration-section">
-    <label for="reg-username"><strong>Register to Spin:</strong></label>
+    <label for="reg-username"><strong>Register to Spin:</strong></label><br><br>
     <input type="text" id="reg-username" placeholder="Enter your name" />
     <button onclick="registerUser()">Register</button>
     <span id="reg-message"></span>
@@ -88,9 +189,6 @@
   <button id="spin-btn" onclick="spinWheel()">SPIN!</button>
   <div id="spinner-result"></div>
 
-  <!-- Existing content ... -->
-  <!-- ...rest of your controls and drawing board... -->
-
   <script>
     // Spinner phrases
     const spinnerPhrases = [
@@ -102,10 +200,10 @@
       "Bhola bhaala"
     ];
 
-    // Registered users array (simulate global, for all users on tab)
+    // Registered users
     let registeredUsers = JSON.parse(localStorage.getItem('spinner_users') || "[]");
 
-    // Registration logic
+    // Register user
     function registerUser() {
       const nameInput = document.getElementById('reg-username');
       const name = nameInput.value.trim();
@@ -126,10 +224,10 @@
       msg.style.color = "green";
       nameInput.value = "";
       renderUserList();
-      // Notify other tabs (simulate real-time)
       window.dispatchEvent(new Event('storage'));
     }
 
+    // Render user list
     function renderUserList() {
       const ul = document.getElementById('user-list-ul');
       ul.innerHTML = '';
@@ -140,26 +238,24 @@
       });
     }
 
-    // Real-time user list update (multi-tab sync)
+    // Sync across tabs
     window.addEventListener('storage', () => {
       registeredUsers = JSON.parse(localStorage.getItem('spinner_users') || "[]");
       renderUserList();
     });
 
-    // Spinner wheel logic
+    // Spinner logic
     const canvas = document.getElementById('spinner-canvas');
     const ctx = canvas.getContext('2d');
     const radius = canvas.width / 2;
     let angleOffset = 0;
     let spinning = false;
-    let spinTimeout = null;
 
     function drawWheel(offsetAngle=0) {
       const n = spinnerPhrases.length;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (let i=0; i<n; i++) {
         const angle = ((2*Math.PI)/n)*i + offsetAngle;
-        // Segment color
         ctx.beginPath();
         ctx.moveTo(radius, radius);
         ctx.arc(radius, radius, radius-4, angle, angle + (2*Math.PI)/n, false);
@@ -170,17 +266,16 @@
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Text
         ctx.save();
         ctx.translate(radius, radius);
         ctx.rotate(angle + (Math.PI/n));
         ctx.textAlign = "right";
-        ctx.font = "bold 18px Arial";
+        ctx.font = "bold 16px Arial";
         ctx.fillStyle = "#2d3436";
-        ctx.fillText(spinnerPhrases[i], radius-24, 8);
+        ctx.fillText(spinnerPhrases[i], radius-20, 8);
         ctx.restore();
       }
-      // Draw pointer
+      // Pointer
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(radius, 10);
@@ -201,52 +296,42 @@
         return;
       }
       spinning = true;
-      let spinAngle = Math.random() * 2 * Math.PI + 8*Math.PI; // 4 turns + randomness
+      let spinAngle = Math.random() * 2 * Math.PI + 8*Math.PI;
       let currAngle = angleOffset;
       let duration = 2500;
       let start = null;
-      let lastFrame = null;
 
       function animate(ts) {
         if (!start) start = ts;
         let elapsed = ts - start;
         let progress = Math.min(elapsed/duration, 1);
-
-        // Easing (ease out)
         let eased = 1 - Math.pow(1-progress, 3);
         currAngle = angleOffset + spinAngle*eased;
         drawWheel(currAngle);
-
         if (progress < 1) {
-          spinTimeout = requestAnimationFrame(animate);
+          requestAnimationFrame(animate);
         } else {
           spinning = false;
           angleOffset = currAngle % (2*Math.PI);
           showSpinResult();
         }
       }
-      spinTimeout = requestAnimationFrame(animate);
+      requestAnimationFrame(animate);
       document.getElementById('spinner-result').textContent = "Spinning...";
     }
 
     function showSpinResult() {
-      // Find which phrase is at the pointer (top)
       const n = spinnerPhrases.length;
       const at = ((2*Math.PI) - (angleOffset % (2*Math.PI))) / (2*Math.PI/n);
       const idx = Math.floor(at) % n;
       const phrase = spinnerPhrases[idx];
-      // Randomly pick a registered user as winner
       const winner = registeredUsers[Math.floor(Math.random()*registeredUsers.length)];
       document.getElementById('spinner-result').textContent =
         `🎉 "${phrase}" for ${winner}! 🎉`;
     }
 
-    // Initial render
     renderUserList();
-
-    // Make spinner redraw on resize (optional)
     window.addEventListener('resize', () => drawWheel(angleOffset));
   </script>
 </body>
 </html>
-
